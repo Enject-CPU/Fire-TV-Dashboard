@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fire-TV Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #1a1a1a;
+            --secondary-color: #2d2d2d;
+            --accent-color: #00a8ff;
+            --text-color: #ffffff;
+            --edit-color: #ffa500;
+            --hover-color: #3d3d3d;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        
+        body {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--secondary-color);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+        
+        .btn {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: background-color 0.3s;
+            min-height: 50px;
+            min-width: 120px;
+        }
+        
+        .btn:hover {
+            background-color: var(--hover-color);
+        }
+        
+        .btn-edit {
+            background-color: var(--edit-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-edit:hover {
+            background-color: #ffb733;
+        }
+        
+        .btn-back {
+            background-color: transparent;
+            border: 1px solid var(--accent-color);
+        }
+        
+        .btn-back:hover {
+            background-color: rgba(0, 168, 255, 0.1);
+        }
+        
+        /* Haupt-Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 25px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .category-tile {
+            background-color: var(--secondary-color);
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 180px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .category-tile:hover {
+            background-color: var(--hover-color);
+            transform: scale(1.03);
+        }
+        
+        .category-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        .category-name {
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+        
+        /* Unterkategorien Grid */
+        .subcategories-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .subcategory-tile {
+            background-color: var(--secondary-color);
+            border-radius: 10px;
+            padding: 20px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .subcategory-tile:hover {
+            background-color: var(--hover-color);
+            transform: scale(1.03);
+        }
+        
+        .subcategory-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subcategory-name {
+            font-size: 1.2rem;
+            font-weight: 400;
+        }
+        
+        /* Edit-Modus */
+        .edit-mode .category-tile,
+        .edit-mode .subcategory-tile {
+            position: relative;
+        }
+        
+        .edit-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--edit-color);
+            color: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .edit-mode .edit-btn {
+            opacity: 1;
+        }
+        
+        /* Modal für Bearbeitung */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: var(--secondary-color);
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal h2 {
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .subcategories-grid {
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(4, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: repeat(3, 1fr);
+            }
+            
+            .subcategories-grid {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: repeat(5, 1fr);
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(6, 1fr);
+            }
+            
+            .subcategories-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(10, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Fire-TV Dashboard</h1>
+            <div>
+                <button id="editModeBtn" class="btn btn-edit">Bearbeiten</button>
+            </div>
+        </header>
+        
+        <main>
+            <!-- Haupt-Dashboard -->
+            <div id="dashboardView" class="view active-view">
+                <div class="dashboard-grid" id="categoriesGrid">
+                    <!-- Kategorien werden hier dynamisch eingefügt -->
+                </div>
+            </div>
+            
+            <!-- Unterkategorien -->
+            <div id="subcategoriesView" class="view">
+                <div class="view-header">
+                    <button id="backToDashboardBtn" class="btn btn-back">← Zurück</button>
+                    <h2 id="subcategoryTitle">Unterkategorien</h2>
+                </div>
+                <div class="subcategories-grid" id="subcategoriesGrid">
+                    <!-- Unterkategorien werden hier dynamisch eingefügt -->
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Modal für Bearbeitung -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Kategorie bearbeiten</h2>
+            <form id="editForm">
+                <div class="form-group">
+                    <label for="editName">Name</label>
+                    <input type="text" id="editName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editIcon">Icon (Emoji)</label>
+                    <input type="text" id="editIcon" maxlength="2" required>
+                </div>
+                <div class="form-group" id="urlGroup" style="display: none;">
+                    <label for="editUrl">URL</label>
+                    <input type="text" id="editUrl">
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="cancelEditBtn" class="btn">Abbrechen</button>
+                    <button type="submit" class="btn btn-edit">Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Initiale Datenstruktur
+        const defaultCategories = [
+            {
+                id: 1,
+                name: "Filme",
+                icon: "🎬",
+                subcategories: [
+                    { name: "Netflix", icon: "🎥", url: "https://netflix.com" },
+                    { name: "Amazon Prime", icon: "📺", url: "https://primevideo.com" },
+                    { name: "YouTube", icon: "▶️", url: "https://youtube.com" },
+                    { name: "Disney+", icon: "🐭", url: "https://disneyplus.com" },
+                    { name: "ARD Mediathek", icon: "📡", url: "https://ardmediathek.de" }
+                ]
+            },
+            {
+                id: 2,
+                name: "Musik",
+                icon: "🎵",
+                subcategories: [
+                    { name: "Spotify", icon: "🎶", url: "https://spotify.com" },
+                    { name: "Amazon Music", icon: "🎧", url: "https://music.amazon.de" },
+                    { name: "YouTube Music", icon: "📻", url: "https://music.youtube.com" },
+                    { name: "SoundCloud", icon: "☁️", url: "https://soundcloud.com" },
+                    { name: "Deezer", icon: "🎼", url: "https://deezer.com" }
+                ]
+            },
+            {
+                id: 3,
+                name: "Lernen",
+                icon: "📚",
+                subcategories: [
+                    { name: "Khan Academy", icon: "🎓", url: "https://khanacademy.org" },
+                    { name: "Duolingo", icon: "🦉", url: "https://duolingo.com" },
+                    { name: "Wikipedia", icon: "ℹ️", url: "https://wikipedia.org" },
+                    { name: "Coursera", icon: "💻", url: "https://coursera.org" },
+                    { name: "Ted Talks", icon: "🎤", url: "https://ted.com" }
+                ]
+            },
+            {
+                id: 4,
+                name: "Tools",
+                icon: "🔧",
+                subcategories: [
+                    { name: "Taschenrechner", icon: "🧮", url: "https://calculator.com" },
+                    { name: "Wetter", icon: "🌤️", url: "https://weather.com" },
+                    { name: "Kalender", icon: "📅", url: "https://calendar.google.com" },
+                    { name: "Notizen", icon: "📝", url: "https://keep.google.com" },
+                    { name: "Karten", icon: "🗺️", url: "https://maps.google.com" }
+                ]
+            },
+            {
+                id: 5,
+                name: "Spiele",
+                icon: "🎮",
+                subcategories: [
+                    { name: "Spiele News", icon: "📰", url: "https://ign.com" },
+                    { name: "Twitch", icon: "🟣", url: "https://twitch.tv" },
+                    { name: "Steam", icon: "💨", url: "https://store.steampowered.com" },
+                    { name: "Minispiele", icon: "🎯", url: "https://miniclip.com" },
+                    { name: "Retro Games", icon: "👾", url: "https://archive.org/details/consolelivingroom" }
+                ]
+            },
+            {
+                id: 6,
+                name: "Sonstiges",
+                icon: "📱",
+                subcategories: [
+                    { name: "Nachrichten", icon: "📰", url: "https://news.google.com" },
+                    { name: "Soziale Medien", icon: "👥", url: "https://twitter.com" },
+                    { name: "Einkaufen", icon: "🛒", url: "https://amazon.de" },
+                    { name: "Rezepte", icon: "🍳", url: "https://allrecipes.com" },
+                    { name: "Fitness", icon: "💪", url: "https://darebee.com" }
+                ]
+            }
+        ];
+
+        // App State
+        let categories = [];
+        let editMode = false;
+        let currentCategoryId = null;
+        let editingItem = null;
+        let editingType = null; // 'category' oder 'subcategory'
+
+        // DOM-Elemente
+        const dashboardView = document.getElementById('dashboardView');
+        const subcategoriesView = document.getElementById('subcategoriesView');
+        const categoriesGrid = document.getElementById('categoriesGrid');
+        const subcategoriesGrid = document.getElementById('subcategoriesGrid');
+        const editModeBtn = document.getElementById('editModeBtn');
+        const backToDashboardBtn = document.getElementById('backToDashboardBtn');
+        const subcategoryTitle = document.getElementById('subcategoryTitle');
+        const editModal = document.getElementById('editModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const editForm = document.getElementById('editForm');
+        const editName = document.getElementById('editName');
+        const editIcon = document.getElementById('editIcon');
+        const editUrl = document.getElementById('editUrl');
+        const urlGroup = document.getElementById('urlGroup');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+
+        // Initialisierung
+        function init() {
+            loadCategories();
+            renderCategories();
+            setupEventListeners();
+        }
+
+        // Kategorien aus localStorage laden oder Standardwerte verwenden
+        function loadCategories() {
+            const storedCategories = localStorage.getItem('fireTvDashboard');
+            if (storedCategories) {
+                categories = JSON.parse(storedCategories);
+            } else {
+                categories = JSON.parse(JSON.stringify(defaultCategories));
+                saveCategories();
+            }
+        }
+
+        // Kategorien in localStorage speichern
+        function saveCategories() {
+            localStorage.setItem('fireTvDashboard', JSON.stringify(categories));
+        }
+
+        // Event-Listener einrichten
+        function setupEventListeners() {
+            editModeBtn.addEventListener('click', toggleEditMode);
+            backToDashboardBtn.addEventListener('click', showDashboard);
+            editForm.addEventListener('submit', saveEdit);
+            cancelEditBtn.addEventListener('click', closeEditModal);
+            
+            // Modal schließen bei Klick außerhalb
+            editModal.addEventListener('click', (e) => {
+                if (e.target === editModal) {
+                    closeEditModal();
+                }
+            });
+        }
+
+        // Edit-Modus umschalten
+        function toggleEditMode() {
+            editMode = !editMode;
+            document.body.classList.toggle('edit-mode', editMode);
+            editModeBtn.textContent = editMode ? 'Fertig' : 'Bearbeiten';
+            
+            if (editMode) {
+                // Edit-Buttons für Kategorien anzeigen
+                document.querySelectorAll('.category-tile').forEach(tile => {
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'edit-btn';
+                    editBtn.innerHTML = '✎';
+                    editBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const categoryId = parseInt(tile.dataset.id);
+                        openEditCategoryModal(categoryId);
+                    });
+                    tile.appendChild(editBtn);
+                });
+                
+                // Edit-Buttons für Unterkategorien anzeigen, falls sichtbar
+                document.querySelectorAll('.subcategory-tile').forEach(tile => {
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'edit-btn';
+                    editBtn.innerHTML = '✎';
+                    editBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const subcategoryIndex = parseInt(tile.dataset.index);
+                        openEditSubcategoryModal(currentCategoryId, subcategoryIndex);
+                    });
+                    tile.appendChild(editBtn);
+                });
+            } else {
+                // Edit-Buttons entfernen
+                document.querySelectorAll('.edit-btn').forEach(btn => btn.remove());
+            }
+        }
+
+        // Hauptkategorien rendern
+        function renderCategories() {
+            categoriesGrid.innerHTML = '';
+            
+            categories.forEach(category => {
+                const tile = document.createElement('div');
+                tile.className = 'category-tile';
+                tile.dataset.id = category.id;
+                
+                tile.innerHTML = `
+                    <div class="category-icon">${category.icon}</div>
+                    <div class="category-name">${category.name}</div>
+                `;
+                
+                tile.addEventListener('click', () => {
+                    if (!editMode) {
+                        showSubcategories(category.id);
+                    }
+                });
+                
+                categoriesGrid.appendChild(tile);
+            });
+        }
+
+        // Unterkategorien anzeigen
+        function showSubcategories(categoryId) {
+            const category = categories.find(c => c.id === categoryId);
+            if (!category) return;
+            
+            currentCategoryId = categoryId;
+            subcategoryTitle.textContent = category.name;
+            subcategoriesGrid.innerHTML = '';
+            
+            category.subcategories.forEach((subcategory, index) => {
+                const tile = document.createElement('div');
+                tile.className = 'subcategory-tile';
+                tile.dataset.index = index;
+                
+                tile.innerHTML = `
+                    <div class="subcategory-icon">${subcategory.icon}</div>
+                    <div class="subcategory-name">${subcategory.name}</div>
+                `;
+                
+                tile.addEventListener('click', () => {
+                    if (!editMode) {
+                        window.open(subcategory.url, '_blank');
+                    }
+                });
+                
+                subcategoriesGrid.appendChild(tile);
+            });
+            
+            dashboardView.classList.remove('active-view');
+            subcategoriesView.classList.add('active-view');
+            
+            // Edit-Buttons hinzufügen, falls Edit-Modus aktiv
+            if (editMode) {
+                document.querySelectorAll('.subcategory-tile').forEach(tile => {
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'edit-btn';
+                    editBtn.innerHTML = '✎';
+                    editBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const subcategoryIndex = parseInt(tile.dataset.index);
+                        openEditSubcategoryModal(categoryId, subcategoryIndex);
+                    });
+                    tile.appendChild(editBtn);
+                });
+            }
+        }
+
+        // Zurück zum Dashboard
+        function showDashboard() {
+            subcategoriesView.classList.remove('active-view');
+            dashboardView.classList.add('active-view');
+            currentCategoryId = null;
+        }
+
+        // Modal für Bearbeitung einer Kategorie öffnen
+        function openEditCategoryModal(categoryId) {
+            const category = categories.find(c => c.id === categoryId);
+            if (!category) return;
+            
+            editingItem = category;
+            editingType = 'category';
+            
+            modalTitle.textContent = 'Kategorie bearbeiten';
+            editName.value = category.name;
+            editIcon.value = category.icon;
+            urlGroup.style.display = 'none';
+            
+            editModal.style.display = 'flex';
+        }
+
+        // Modal für Bearbeitung einer Unterkategorie öffnen
+        function openEditSubcategoryModal(categoryId, subcategoryIndex) {
+            const category = categories.find(c => c.id === categoryId);
+            if (!category || !category.subcategories[subcategoryIndex]) return;
+            
+            editingItem = category.subcategories[subcategoryIndex];
+            editingType = 'subcategory';
+            editingItem.categoryId = categoryId;
+            editingItem.index = subcategoryIndex;
+            
+            modalTitle.textContent = 'Unterkategorie bearbeiten';
+            editName.value = editingItem.name;
+            editIcon.value = editingItem.icon;
+            editUrl.value = editingItem.url;
+            urlGroup.style.display = 'block';
+            
+            editModal.style.display = 'flex';
+        }
+
+        // Bearbeitung speichern
+        function saveEdit(e) {
+            e.preventDefault();
+            
+            if (editingType === 'category') {
+                editingItem.name = editName.value;
+                editingItem.icon = editIcon.value;
+            } else if (editingType === 'subcategory') {
+                editingItem.name = editName.value;
+                editingItem.icon = editIcon.value;
+                editingItem.url = editUrl.value;
+            }
+            
+            saveCategories();
+            
+            // UI aktualisieren
+            if (editingType === 'category') {
+                renderCategories();
+            } else if (editingType === 'subcategory') {
+                showSubcategories(editingItem.categoryId);
+            }
+            
+            closeEditModal();
+        }
+
+        // Modal schließen
+        function closeEditModal() {
+            editModal.style.display = 'none';
+            editingItem = null;
+            editingType = null;
+        }
+
+        // App initialisieren
+        init();
+    </script>
+</body>
+</html>
