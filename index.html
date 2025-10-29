@@ -11,7 +11,6 @@
             --accent-color: #00a8ff;
             --text-color: #ffffff;
             --edit-color: #ffa500;
-            --music-color: #ff4081;
             --hover-color: #3d3d3d;
         }
         
@@ -49,11 +48,6 @@
             font-weight: 300;
         }
         
-        .header-buttons {
-            display: flex;
-            gap: 15px;
-        }
-        
         .btn {
             background-color: var(--secondary-color);
             color: var(--text-color);
@@ -62,14 +56,13 @@
             border-radius: 8px;
             cursor: pointer;
             font-size: 1.1rem;
-            transition: all 0.3s;
+            transition: background-color 0.3s;
             min-height: 50px;
             min-width: 120px;
         }
         
         .btn:hover {
             background-color: var(--hover-color);
-            transform: scale(1.05);
         }
         
         .btn-edit {
@@ -79,26 +72,6 @@
         
         .btn-edit:hover {
             background-color: #ffb733;
-        }
-        
-        .btn-music {
-            background-color: var(--music-color);
-            color: white;
-        }
-        
-        .btn-music:hover {
-            background-color: #ff79b0;
-        }
-        
-        .btn-music.playing {
-            background-color: #4caf50;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
         }
         
         .btn-back {
@@ -275,20 +248,6 @@
             margin-top: 25px;
         }
         
-        /* Copyright Footer */
-        .copyright-footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            text-align: center;
-            padding: 10px;
-            font-size: 12px;
-            z-index: 1000;
-        }
-        
         /* Responsive Design */
         @media (max-width: 1200px) {
             .subcategories-grid {
@@ -311,17 +270,6 @@
             h1 {
                 font-size: 2rem;
             }
-            
-            .header-buttons {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .btn {
-                min-width: 100px;
-                padding: 10px 15px;
-                font-size: 1rem;
-            }
         }
         
         @media (max-width: 480px) {
@@ -338,19 +286,10 @@
     </style>
 </head>
 <body>
-    <!-- Audio Element für die Musik -->
-    <audio id="menuMusic" loop>
-        <!-- REPLACE THIS SOURCE WITH YOUR JUST DANCE 4 INTRO MUSIC FILE -->
-        <source src="just-dance-4-intro.mp3" type="audio/mpeg">
-        <source src="just-dance-4-intro.ogg" type="audio/ogg">
-        Your browser does not support the audio element.
-    </audio>
-
     <div class="container">
         <header>
             <h1>Fire-TV Dashboard</h1>
-            <div class="header-buttons">
-                <button id="musicToggleBtn" class="btn btn-music">Menü Musik</button>
+            <div>
                 <button id="editModeBtn" class="btn btn-edit">Bearbeiten</button>
             </div>
         </header>
@@ -401,11 +340,6 @@
         </div>
     </div>
 
-    <!-- Copyright Footer -->
-    <div class="copyright-footer">
-        © 2024 Your Name. All Rights Reserved. Unauthorized copying, reproduction, or distribution is prohibited.
-    </div>
-
     <script>
         // Initiale Datenstruktur
         const defaultCategories = [
@@ -417,7 +351,7 @@
                     { name: "Netflix", icon: "🎥", url: "https://netflix.com" },
                     { name: "Amazon Prime", icon: "📺", url: "https://primevideo.com" },
                     { name: "YouTube", icon: "▶️", url: "https://youtube.com" },
-                    { name: "Disney+", icon: "🐭", url: "https://disneyplus.com" },
+                    { name: "Disney+", icon: "➕️", url: "https://disneyplus.com" },
                     { name: "ARD Mediathek", icon: "📡", url: "https://ardmediathek.de" }
                 ]
             },
@@ -489,7 +423,6 @@
         let currentCategoryId = null;
         let editingItem = null;
         let editingType = null; // 'category' oder 'subcategory'
-        let musicPlaying = false;
 
         // DOM-Elemente
         const dashboardView = document.getElementById('dashboardView');
@@ -497,7 +430,6 @@
         const categoriesGrid = document.getElementById('categoriesGrid');
         const subcategoriesGrid = document.getElementById('subcategoriesGrid');
         const editModeBtn = document.getElementById('editModeBtn');
-        const musicToggleBtn = document.getElementById('musicToggleBtn');
         const backToDashboardBtn = document.getElementById('backToDashboardBtn');
         const subcategoryTitle = document.getElementById('subcategoryTitle');
         const editModal = document.getElementById('editModal');
@@ -508,16 +440,12 @@
         const editUrl = document.getElementById('editUrl');
         const urlGroup = document.getElementById('urlGroup');
         const cancelEditBtn = document.getElementById('cancelEditBtn');
-        const menuMusic = document.getElementById('menuMusic');
 
         // Initialisierung
         function init() {
             loadCategories();
             renderCategories();
             setupEventListeners();
-            
-            // Set initial music volume
-            menuMusic.volume = 0.5;
         }
 
         // Kategorien aus localStorage laden oder Standardwerte verwenden
@@ -539,7 +467,6 @@
         // Event-Listener einrichten
         function setupEventListeners() {
             editModeBtn.addEventListener('click', toggleEditMode);
-            musicToggleBtn.addEventListener('click', toggleMusic);
             backToDashboardBtn.addEventListener('click', showDashboard);
             editForm.addEventListener('submit', saveEdit);
             cancelEditBtn.addEventListener('click', closeEditModal);
@@ -550,32 +477,6 @@
                     closeEditModal();
                 }
             });
-            
-            // Musik-Ende Event
-            menuMusic.addEventListener('ended', function() {
-                musicPlaying = false;
-                musicToggleBtn.classList.remove('playing');
-                musicToggleBtn.textContent = 'Menü Musik';
-            });
-        }
-
-        // Musik umschalten
-        function toggleMusic() {
-            if (musicPlaying) {
-                menuMusic.pause();
-                musicPlaying = false;
-                musicToggleBtn.classList.remove('playing');
-                musicToggleBtn.textContent = 'Menü Musik';
-            } else {
-                menuMusic.play().then(() => {
-                    musicPlaying = true;
-                    musicToggleBtn.classList.add('playing');
-                    musicToggleBtn.textContent = 'Musik Stopp';
-                }).catch(error => {
-                    console.log('Music playback failed:', error);
-                    alert('Musik konnte nicht abgespielt werden. Bitte interagiere zuerst mit der Seite.');
-                });
-            }
         }
 
         // Edit-Modus umschalten
